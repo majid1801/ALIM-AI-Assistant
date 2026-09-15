@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My AI Assistant</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- Header -->
+        <header class="header">
+
+            <div class="brand">
+                <div class="logo">🤖</div>
+
+                <div>
+                    <h1>My AI Assistant</h1>
+                    <span class="status">
+                        <span class="status-dot"></span>
+                        Online
+                    </span>
+                </div>
+            </div>
+
+            <button class="menu-button" onclick="clearChat()">
+                Clear
+            </button>
+
+        </header>
+
+
+        <!-- Chat Area -->
+        <main class="chat-container" id="chatContainer">
+
+            <!-- Welcome Message -->
+            <div class="message assistant-message">
+
+                <div class="avatar">
+                    🤖
+                </div>
+
+                <div class="message-content">
+
+                    <div class="sender">
+                        AI Assistant
+                    </div>
+
+                    <div class="bubble">
+                        <h2>Hello! 👋</h2>
+
+                        <p>
+                            Welcome to your personal AI Assistant.
+                            You can send me a message below.
+                        </p>
+
+                        <p class="small-text">
+                            🚀 More powerful AI and Agentic features
+                            will be added soon.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+
+        <!-- Typing Indicator -->
+        <div class="typing" id="typing">
+            <span></span>
+            <span></span>
+            <span></span>
+            AI is thinking...
+        </div>
+
+
+        <!-- Input Area -->
+        <footer class="input-area">
+
+            <div class="input-box">
+
+                <textarea
+                    id="messageInput"
+                    placeholder="Ask me anything..."
+                    rows="1"
+                    onkeydown="handleKeyDown(event)"
+                ></textarea>
+
+                <button
+                    id="sendButton"
+                    onclick="sendMessage()"
+                    aria-label="Send message"
+                >
+                    ➤
+                </button>
+
+            </div>
+
+            <p class="footer-text">
+                My AI Assistant • Personal project
+            </p>
+
+        </footer>
+
+    </div>
+
+
+    <script>
+
+        const messageInput = document.getElementById("messageInput");
+        const chatContainer = document.getElementById("chatContainer");
+        const typing = document.getElementById("typing");
+        const sendButton = document.getElementById("sendButton");
+
+
+        function addMessage(message, type) {
+
+            const wrapper = document.createElement("div");
+
+            wrapper.className =
+                type === "user"
+                    ? "message user-message"
+                    : "message assistant-message";
+
+
+            const avatar = document.createElement("div");
+
+            avatar.className = "avatar";
+
+            avatar.textContent =
+                type === "user"
+                    ? "👤"
+                    : "🤖";
+
+
+            const content = document.createElement("div");
+
+            content.className = "message-content";
+
+
+            const sender = document.createElement("div");
+
+            sender.className = "sender";
+
+            sender.textContent =
+                type === "user"
+                    ? "You"
+                    : "AI Assistant";
+
+
+            const bubble = document.createElement("div");
+
+            bubble.className = "bubble";
+
+            bubble.textContent = message;
+
+
+            content.appendChild(sender);
+            content.appendChild(bubble);
+
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(content);
+
+            chatContainer.appendChild(wrapper);
+
+
+            chatContainer.scrollTop =
+                chatContainer.scrollHeight;
+        }
+
+
+        async function sendMessage() {
+
+            const message =
+                messageInput.value.trim();
+
+
+            if (!message) {
+                return;
+            }
+
+
+            addMessage(message, "user");
+
+
+            messageInput.value = "";
+
+            messageInput.style.height = "auto";
+
+            sendButton.disabled = true;
+
+            typing.classList.add("show");
+
+
+            try {
+
+                const response = await fetch("/chat", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        message: message
+                    })
+
+                });
+
+
+                const data =
+                    await response.json();
+
+
+                setTimeout(() => {
+
+                    typing.classList.remove("show");
+
+                    addMessage(
+                        data.reply,
+                        "assistant"
+                    );
+
+                    sendButton.disabled = false;
+
+                    messageInput.focus();
+
+                }, 500);
+
+
+            } catch (error) {
+
+                typing.classList.remove("show");
+
+                addMessage(
+                    "Sorry, something went wrong. Please try again.",
+                    "assistant"
+                );
+
+                sendButton.disabled = false;
+            }
+        }
+
+
+        function handleKeyDown(event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+            }
+        }
+
+
+        function clearChat() {
+
+            chatContainer.innerHTML = "";
+
+            addMessage(
+                "Chat cleared. How can I help you?",
+                "assistant"
+            );
+        }
+
+
+        messageInput.addEventListener(
+            "input",
+            function () {
+
+                this.style.height = "auto";
+
+                this.style.height =
+                    Math.min(
+                        this.scrollHeight,
+                        150
+                    ) + "px";
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
